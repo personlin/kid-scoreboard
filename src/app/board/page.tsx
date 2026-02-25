@@ -63,8 +63,8 @@ function Board() {
 
       if (r.error) throw r.error
       setPending((r.data ?? []) as PendingRedemption[])
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     } finally {
       setLoading(false)
     }
@@ -74,7 +74,6 @@ function Board() {
     load()
     const t = setInterval(load, 10000) // simple auto-refresh for TV
     return () => clearInterval(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const total = useMemo(() => balances.reduce((a, x) => a + (x.balance ?? 0), 0), [balances])

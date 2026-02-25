@@ -97,8 +97,8 @@ function Admin() {
         .limit(50)
       if (p.error) throw p.error
       setPending((p.data ?? []) as PendingRedemption[])
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     } finally {
       setLoading(false)
     }
@@ -128,8 +128,8 @@ function Admin() {
       if (error) throw error
       setMsg(`${selectedKidName} ${delta > 0 ? '+' : ''}${delta}（${reason}）✅`)
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -149,8 +149,8 @@ function Admin() {
       if (error) throw error
       setMsg(`${selectedKidName} 任務完成（${today}）✅`)
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -164,8 +164,8 @@ function Admin() {
       if (error) throw error
       setMsg(`${selectedKidName} 已兌換願望 ✅`)
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -181,8 +181,8 @@ function Admin() {
       if (error) throw error
       setMsg('已標記完成 ✅')
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -213,8 +213,8 @@ function Admin() {
 
       setTaskDraft({ title: '', points: 1, is_daily: true, active: true })
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -232,8 +232,8 @@ function Admin() {
       if (error) throw error
       setMsg('任務已刪除 ✅')
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -256,8 +256,8 @@ function Admin() {
       if (u2.error) throw u2.error
 
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -269,8 +269,8 @@ function Admin() {
       const { error } = await supabase.from('tasks').update({ active }).eq('id', id)
       if (error) throw error
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -300,8 +300,8 @@ function Admin() {
 
       setRewardDraft({ title: '', cost_points: 10, active: true })
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -319,9 +319,9 @@ function Admin() {
       if (error) throw error
       setMsg('願望已刪除 ✅')
       await load()
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Likely FK restrict if used.
-      setErr((e?.message ?? String(e)) + '（若已兌換過，請改用停用 active=false）')
+      setErr(((e instanceof Error ? e.message : String(e)) ?? 'Unknown error') + '（若已兌換過，請改用停用 active=false）')
     }
   }
 
@@ -343,8 +343,8 @@ function Admin() {
       if (u2.error) throw u2.error
 
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
@@ -356,8 +356,8 @@ function Admin() {
       const { error } = await supabase.from('rewards').update({ active }).eq('id', id)
       if (error) throw error
       await load()
-    } catch (e: any) {
-      setErr(e?.message ?? String(e))
+    } catch (e: unknown) {
+      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
     }
   }
 
