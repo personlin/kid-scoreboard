@@ -11,10 +11,10 @@ type PointLog = {
   id: string
   kid_id: string
   delta: number
-  reason: string
-  note: string | null
+  kind: string
+  reason: string | null
   created_at: string
-  tasks: { title: string } | null
+  task_id: string | null
 }
 
 type Redemption = {
@@ -65,8 +65,8 @@ function History() {
       const supabase = getSupabase()
 
       const pl = await supabase
-        .from('point_logs')
-        .select('id,kid_id,delta,reason,note,created_at,tasks(title)')
+        .from('point_events')
+        .select('id,kid_id,delta,kind,reason,created_at,task_id')
         .eq('kid_id', kidId)
         .order('created_at', { ascending: false })
         .limit(100)
@@ -111,10 +111,9 @@ function History() {
   }
 
   function reasonLabel(log: PointLog) {
-    if (log.tasks?.title) return `任務：${log.tasks.title}`
-    if (log.reason === 'manual') return '手動加扣分'
-    if (log.reason === 'task') return '任務（已刪除）'
-    return log.reason
+    if (log.kind === 'task') return `任務${log.reason ? `：${log.reason}` : ''}`
+    if (log.kind === 'manual') return `手動加扣分${log.reason ? `（${log.reason}）` : ''}`
+    return log.kind
   }
 
   // ── 共用樣式常數 ──────────────────────────────────
@@ -230,7 +229,6 @@ function History() {
                         <th style={{ padding: '8px 12px', fontWeight: 700, color: '#5c2d91' }}>時間</th>
                         <th style={{ padding: '8px 12px', fontWeight: 700, color: '#5c2d91' }}>變化</th>
                         <th style={{ padding: '8px 12px', fontWeight: 700, color: '#5c2d91' }}>原因</th>
-                        <th style={{ padding: '8px 12px', fontWeight: 700, color: '#5c2d91' }}>備註</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -244,7 +242,6 @@ function History() {
                             {log.delta > 0 ? `+${log.delta}` : log.delta}
                           </td>
                           <td style={{ padding: '8px 12px', color: '#333' }}>{reasonLabel(log)}</td>
-                          <td style={{ padding: '8px 12px', color: '#888' }}>{log.note ?? '—'}</td>
                         </tr>
                       ))}
                     </tbody>

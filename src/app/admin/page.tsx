@@ -145,7 +145,7 @@ function Admin() {
         p_kid: selectedKid,
         p_task: taskId,
         p_event_date: today,
-        p_reason: 'task',
+        p_reason: taskTitle,
       })
       if (error) {
         // 偵測每日任務重複領取（unique 違反或 RPC 自訂訊息）
