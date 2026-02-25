@@ -2,6 +2,7 @@
 
 import AuthGate from '@/components/AuthGate'
 import { getSupabase } from '@/lib/supabaseClient'
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
 type Kid = { id: string; name: string; sort_order: number }
@@ -455,6 +456,17 @@ function Admin() {
             >
               🔄 重新整理
             </button>
+            <Link
+              href="/board"
+              style={{
+                ...btn('linear-gradient(135deg, #339af0, #74c0fc)', '#fff', '0 2px 6px rgba(51,154,240,.4)'),
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              📺 計分板
+            </Link>
             <button onClick={signOut} style={btn('rgba(0,0,0,.08)', '#444')}>
               登出
             </button>

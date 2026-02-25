@@ -2,9 +2,12 @@
 
 import AuthGate from '@/components/AuthGate'
 import { getSupabase } from '@/lib/supabaseClient'
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
 type KidBalance = { kid_id: string; name: string; sort_order: number; balance: number }
+
+type Reward = { id: string; title: string; cost_points: number; active: boolean }
 
 type PendingRedemption = {
   id: string
@@ -36,6 +39,7 @@ export default function BoardPage() {
 
 function Board() {
   const [balances, setBalances] = useState<KidBalance[]>([])
+  const [rewards, setRewards] = useState<Reward[]>([])
   const [pending, setPending] = useState<PendingRedemption[]>([])
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -53,6 +57,14 @@ function Board() {
 
       if (b.error) throw b.error
       setBalances((b.data ?? []) as KidBalance[])
+
+      const rw = await supabase
+        .from('rewards')
+        .select('id,title,cost_points,active')
+        .eq('active', true)
+        .order('sort_order', { ascending: true })
+      if (rw.error) throw rw.error
+      setRewards((rw.data ?? []) as Reward[])
 
       const r = await supabase
         .from('redemptions')
@@ -143,6 +155,21 @@ function Board() {
             >
               🔄 重新整理
             </button>
+            <Link
+              href="/admin"
+              style={{
+                background: 'linear-gradient(135deg, #20c997, #3bc9db)',
+                color: '#fff',
+                borderRadius: 999,
+                padding: '5px 14px',
+                fontWeight: 700,
+                fontSize: 14,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(32,201,151,.4)',
+              }}
+            >
+              ⚙️ 管理
+            </Link>
           </div>
         </div>
 
@@ -181,6 +208,85 @@ function Board() {
           ))}
         </div>
 
+        {/* 可兌換願望 */}
+        <section
+          style={{
+            marginTop: 28,
+            background: 'rgba(255,255,255,.75)',
+            borderRadius: 24,
+            padding: '20px 24px',
+            boxShadow: '0 4px 20px rgba(0,0,0,.08)',
+          }}
+        >
+          <h2 style={{ margin: '0 0 14px', fontSize: 24, fontWeight: 900, color: '#5c2d91' }}>🎁 可兌換願望</h2>
+          {rewards.length === 0 ? (
+            <div style={{ color: '#888', fontSize: 16 }}>目前沒有可兌換的願望。</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {rewards.map((rw) => {
+                const affordable = balances.filter((b) => b.balance >= rw.cost_points)
+                return (
+                  <div
+                    key={rw.id}
+                    style={{
+                      background: 'linear-gradient(90deg, #f3f0ff, #e5dbff)',
+                      border: '2px solid #cc5de8',
+                      borderRadius: 14,
+                      padding: '10px 16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <span style={{ fontWeight: 800, fontSize: 16, color: '#5c2d91', flexGrow: 1 }}>
+                      🎁 {rw.title}
+                    </span>
+                    <span
+                      style={{
+                        background: '#cc5de8',
+                        color: '#fff',
+                        borderRadius: 999,
+                        padding: '2px 12px',
+                        fontWeight: 800,
+                        fontSize: 14,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      ⭐ {rw.cost_points} 點
+                    </span>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {balances.map((b) => (
+                        <span
+                          key={b.kid_id}
+                          style={{
+                            borderRadius: 999,
+                            padding: '2px 10px',
+                            fontSize: 13,
+                            fontWeight: 700,
+                            background: b.balance >= rw.cost_points
+                              ? 'linear-gradient(135deg, #51cf66, #a9e34b)'
+                              : 'rgba(0,0,0,.08)',
+                            color: b.balance >= rw.cost_points ? '#fff' : '#888',
+                            boxShadow: b.balance >= rw.cost_points
+                              ? '0 1px 4px rgba(81,207,102,.4)'
+                              : 'none',
+                          }}
+                        >
+                          {b.name} {b.balance >= rw.cost_points ? '✓' : `(${b.balance}/${rw.cost_points})`}
+                        </span>
+                      ))}
+                    </div>
+                    {affordable.length === 0 && (
+                      <span style={{ fontSize: 13, color: '#aaa', fontStyle: 'italic' }}>目前沒有孩子可兌換</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
         {/* 待執行願望 */}
         <section
           style={{
@@ -199,7 +305,7 @@ function Board() {
               color: '#e67700',
             }}
           >
-            🌟 待執行願望
+            🌟 待執行願望（已兌換，待家長完成）
           </h2>
           {pending.length === 0 ? (
             <div style={{ color: '#888', fontSize: 16 }}>🎉 目前沒有待執行的兌換！</div>
