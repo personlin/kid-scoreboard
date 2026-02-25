@@ -436,15 +436,26 @@ function Admin() {
           >
             ⚙️ 家長管理
           </h1>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              background: 'rgba(255,255,255,.7)',
+              borderRadius: 999,
+              padding: '6px 14px',
+              boxShadow: '0 2px 8px rgba(0,0,0,.08)',
+            }}
+          >
+            <span style={{ opacity: 0.75, fontSize: 14, fontWeight: 700, color: '#5c2d91' }}>{loading ? '⏳ 更新中…' : '✅ 已更新'}</span>
             <button
               onClick={load}
               disabled={loading}
               style={btn('linear-gradient(135deg, #845ef7, #cc5de8)', '#fff', '0 2px 6px rgba(132,94,247,.4)')}
             >
-              {loading ? '⏳ 更新中…' : '🔄 重新整理'}
+              🔄 重新整理
             </button>
-            <button onClick={signOut} style={btn('rgba(0,0,0,.1)', '#444')}>
+            <button onClick={signOut} style={btn('rgba(0,0,0,.08)', '#444')}>
               登出
             </button>
           </div>
