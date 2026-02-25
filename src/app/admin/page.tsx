@@ -1,7 +1,7 @@
 'use client'
 
 import AuthGate from '@/components/AuthGate'
-import { getSupabase } from '@/lib/supabaseClient'
+import { errMsg, getSupabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -17,8 +17,8 @@ type PendingRedemption = {
   kid_id: string
   status: 'pending'
   note: string | null
-  kids: { name: string }[] | null
-  rewards: { title: string; cost_points: number }[] | null
+  kids: { name: string } | null
+  rewards: { title: string; cost_points: number } | null
 }
 
 export default function AdminPage() {
@@ -99,7 +99,7 @@ function Admin() {
       if (p.error) throw p.error
       setPending((p.data ?? []) as PendingRedemption[])
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     } finally {
       setLoading(false)
     }
@@ -130,11 +130,11 @@ function Admin() {
       setMsg(`${selectedKidName} ${delta > 0 ? '+' : ''}${delta}（${reason}）✅`)
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
-  async function claimTask(taskId: string) {
+  async function claimTask(taskId: string, taskTitle: string) {
     setMsg(null)
     setErr(null)
     try {
@@ -147,11 +147,25 @@ function Admin() {
         p_event_date: today,
         p_reason: 'task',
       })
-      if (error) throw error
-      setMsg(`${selectedKidName} 任務完成（${today}）✅`)
+      if (error) {
+        // 偵測每日任務重複領取（unique 違反或 RPC 自訂訊息）
+        const msg = error.message ?? ''
+        const code = (error as { code?: string }).code ?? ''
+        if (
+          code === '23505' ||
+          msg.toLowerCase().includes('already') ||
+          msg.toLowerCase().includes('duplicate') ||
+          msg.toLowerCase().includes('unique')
+        ) {
+          setMsg(`⚠️ ${selectedKidName} 今天已經領過「${taskTitle}」了，不能重複領取。`)
+          return
+        }
+        throw error
+      }
+      setMsg(`${selectedKidName} 完成「${taskTitle}」✅`)
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -166,7 +180,7 @@ function Admin() {
       setMsg(`${selectedKidName} 已兌換願望 ✅`)
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -183,7 +197,7 @@ function Admin() {
       setMsg('已標記完成 ✅')
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -215,7 +229,7 @@ function Admin() {
       setTaskDraft({ title: '', points: 1, is_daily: true, active: true })
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -234,7 +248,7 @@ function Admin() {
       setMsg('任務已刪除 ✅')
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -258,7 +272,7 @@ function Admin() {
 
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -271,7 +285,7 @@ function Admin() {
       if (error) throw error
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -302,7 +316,7 @@ function Admin() {
       setRewardDraft({ title: '', cost_points: 10, active: true })
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -322,7 +336,7 @@ function Admin() {
       await load()
     } catch (e: unknown) {
       // Likely FK restrict if used.
-      setErr(((e instanceof Error ? e.message : String(e)) ?? 'Unknown error') + '（若已兌換過，請改用停用 active=false）')
+      setErr(errMsg(e) + '（若已兌換過，請改用停用 active=false）')
     }
   }
 
@@ -345,7 +359,7 @@ function Admin() {
 
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -358,7 +372,7 @@ function Admin() {
       if (error) throw error
       await load()
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     }
   }
 
@@ -554,7 +568,7 @@ function Admin() {
                 .map((t) => (
                   <button
                     key={t.id}
-                    onClick={() => claimTask(t.id)}
+                    onClick={() => claimTask(t.id, t.title)}
                     style={btn('linear-gradient(135deg, #ffa94d, #ffd43b)', '#5c4400', '0 2px 6px rgba(255,169,77,.4)')}
                   >
                     {t.title} <span style={{ opacity: 0.75 }}>(+{t.points})</span>
@@ -763,10 +777,10 @@ function Admin() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontWeight: 600, color: '#5c4400' }}>
                     <span style={{ background: '#ffd43b', borderRadius: 999, padding: '2px 12px', fontWeight: 800 }}>
-                      {p.kids?.[0]?.name ?? p.kid_id}
+                      {p.kids?.name ?? p.kid_id}
                     </span>
-                    <span>🎁 {p.rewards?.[0]?.title ?? '（未知願望）'}</span>
-                    {p.rewards?.[0] && <span style={{ opacity: 0.7, fontSize: 14 }}>（{p.rewards[0].cost_points} 點）</span>}
+                    <span>🎁 {p.rewards?.title ?? '（未知願望）'}</span>
+                    {p.rewards && <span style={{ opacity: 0.7, fontSize: 14 }}>（{p.rewards.cost_points} 點）</span>}
                   </div>
                   <button
                     onClick={() => markDone(p.id)}

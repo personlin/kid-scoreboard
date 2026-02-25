@@ -1,7 +1,7 @@
 'use client'
 
 import AuthGate from '@/components/AuthGate'
-import { getSupabase } from '@/lib/supabaseClient'
+import { errMsg, getSupabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -14,7 +14,7 @@ type PointLog = {
   reason: string
   note: string | null
   created_at: string
-  tasks: { title: string }[] | null
+  tasks: { title: string } | null
 }
 
 type Redemption = {
@@ -24,7 +24,7 @@ type Redemption = {
   done_at: string | null
   status: string
   note: string | null
-  rewards: { title: string; cost_points: number }[] | null
+  rewards: { title: string; cost_points: number } | null
 }
 
 export default function HistoryPage() {
@@ -52,7 +52,7 @@ function History() {
       setKids(kk)
       if (!selectedKid && kk[0]?.id) setSelectedKid(kk[0].id)
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
       setLoading(false)
     }
   }
@@ -71,7 +71,7 @@ function History() {
         .order('created_at', { ascending: false })
         .limit(100)
       if (pl.error) throw pl.error
-      setPointLogs((pl.data ?? []) as PointLog[])
+      setPointLogs((pl.data ?? []) as unknown as PointLog[])
 
       const rd = await supabase
         .from('redemptions')
@@ -80,9 +80,9 @@ function History() {
         .order('redeemed_at', { ascending: false })
         .limit(100)
       if (rd.error) throw rd.error
-      setRedemptions((rd.data ?? []) as Redemption[])
+      setRedemptions((rd.data ?? []) as unknown as Redemption[])
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     } finally {
       setLoading(false)
     }
@@ -111,7 +111,7 @@ function History() {
   }
 
   function reasonLabel(log: PointLog) {
-    if (log.tasks?.[0]?.title) return `任務：${log.tasks[0].title}`
+    if (log.tasks?.title) return `任務：${log.tasks.title}`
     if (log.reason === 'manual') return '手動加扣分'
     if (log.reason === 'task') return '任務（已刪除）'
     return log.reason
@@ -282,8 +282,8 @@ function History() {
                           style={{ background: i % 2 === 0 ? '#fff' : '#fafafa', borderBottom: '1px solid #f1f3f5' }}
                         >
                           <td style={{ padding: '8px 12px', color: '#666', whiteSpace: 'nowrap' }}>{formatDate(r.redeemed_at)}</td>
-                          <td style={{ padding: '8px 12px', fontWeight: 700, color: '#333' }}>{r.rewards?.[0]?.title ?? '—'}</td>
-                          <td style={{ padding: '8px 12px', color: '#cc5de8', fontWeight: 700 }}>{r.rewards?.[0]?.cost_points ?? '—'}</td>
+                          <td style={{ padding: '8px 12px', fontWeight: 700, color: '#333' }}>{r.rewards?.title ?? '—'}</td>
+                          <td style={{ padding: '8px 12px', color: '#cc5de8', fontWeight: 700 }}>{r.rewards?.cost_points ?? '—'}</td>
                           <td style={{ padding: '8px 12px' }}>
                             <span
                               style={{

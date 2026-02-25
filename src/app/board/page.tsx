@@ -1,7 +1,7 @@
 'use client'
 
 import AuthGate from '@/components/AuthGate'
-import { getSupabase } from '@/lib/supabaseClient'
+import { errMsg, getSupabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
@@ -15,8 +15,8 @@ type PendingRedemption = {
   kid_id: string
   status: 'pending'
   note: string | null
-  kids: { name: string }[] | null
-  rewards: { title: string; cost_points: number }[] | null
+  kids: { name: string } | null
+  rewards: { title: string; cost_points: number } | null
 }
 
 // 每張卡片循環使用的鮮豔漸層色
@@ -76,7 +76,7 @@ function Board() {
       if (r.error) throw r.error
       setPending((r.data ?? []) as PendingRedemption[])
     } catch (e: unknown) {
-      setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setErr(errMsg(e))
     } finally {
       setLoading(false)
     }
@@ -353,11 +353,11 @@ function Board() {
                       color: '#5c4400',
                     }}
                   >
-                    {p.kids?.[0]?.name ?? p.kid_id}
+                    {p.kids?.name ?? p.kid_id}
                   </span>
-                  <span>🎁 {p.rewards?.[0]?.title ?? '（未知願望）'}</span>
-                  {p.rewards?.[0] && (
-                    <span style={{ opacity: 0.75, fontSize: 14 }}>（{p.rewards[0].cost_points} 點）</span>
+                  <span>🎁 {p.rewards?.title ?? '（未知願望）'}</span>
+                  {p.rewards && (
+                    <span style={{ opacity: 0.75, fontSize: 14 }}>（{p.rewards.cost_points} 點）</span>
                   )}
                   {p.note && (
                     <span style={{ opacity: 0.65, fontSize: 14 }}>— 備註：{p.note}</span>
