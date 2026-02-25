@@ -361,250 +361,392 @@ function Admin() {
     }
   }
 
+  // ── 共用樣式常數 ──────────────────────────────────
+  const card: React.CSSProperties = {
+    background: 'rgba(255,255,255,.78)',
+    borderRadius: 24,
+    padding: '20px 24px',
+    boxShadow: '0 4px 20px rgba(0,0,0,.08)',
+  }
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    border: '2px solid #dee2e6',
+    borderRadius: 10,
+    padding: '8px 12px',
+    fontSize: 15,
+    fontFamily: 'inherit',
+    marginTop: 4,
+    outline: 'none',
+    boxSizing: 'border-box',
+  }
+  const labelStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    fontWeight: 600,
+    fontSize: 14,
+    color: '#495057',
+  }
+  const btn = (bg: string, color = '#fff', shadow?: string): React.CSSProperties => ({
+    border: 'none',
+    borderRadius: 999,
+    padding: '7px 18px',
+    fontWeight: 700,
+    fontSize: 14,
+    cursor: 'pointer',
+    background: bg,
+    color,
+    boxShadow: shadow ?? '0 2px 6px rgba(0,0,0,.12)',
+    fontFamily: 'inherit',
+  })
+  const rowCard = (active = true): React.CSSProperties => ({
+    border: '2px solid #e9ecef',
+    borderRadius: 14,
+    padding: '10px 14px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap' as const,
+    background: '#fff',
+    opacity: active ? 1 : 0.55,
+  })
+
   return (
-    <main style={{ padding: 20, maxWidth: 980, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-        <h1 style={{ margin: 0 }}>家長管理</h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button onClick={load} disabled={loading}>
-            {loading ? '更新中…' : '重新整理'}
-          </button>
-          <button onClick={signOut}>Sign out</button>
-        </div>
-      </div>
+    <main
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(160deg, #e0f7fa 0%, #fff9c4 50%, #fce4ec 100%)',
+        padding: '24px 20px 48px',
+        fontFamily: '"Segoe UI", "Noto Sans TC", sans-serif',
+      }}
+    >
+      <div style={{ maxWidth: 980, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-        <label>
-          選擇小孩：
-          <select value={selectedKid} onChange={(e) => setSelectedKid(e.target.value)} style={{ marginLeft: 8 }}>
+        {/* ── 標題列 ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <h1
+            style={{
+              margin: 0,
+              fontSize: 'clamp(26px, 5vw, 44px)',
+              fontWeight: 900,
+              color: '#5c2d91',
+              textShadow: '2px 3px 0 rgba(92,45,145,.18)',
+              letterSpacing: 1,
+            }}
+          >
+            ⚙️ 家長管理
+          </h1>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={load}
+              disabled={loading}
+              style={btn('linear-gradient(135deg, #845ef7, #cc5de8)', '#fff', '0 2px 6px rgba(132,94,247,.4)')}
+            >
+              {loading ? '⏳ 更新中…' : '🔄 重新整理'}
+            </button>
+            <button onClick={signOut} style={btn('rgba(0,0,0,.1)', '#444')}>
+              登出
+            </button>
+          </div>
+        </div>
+
+        {/* ── 訊息橫幅 ── */}
+        {msg && (
+          <div style={{ background: '#d3f9d8', border: '2px solid #51cf66', borderRadius: 12, padding: '10px 18px', color: '#1c7c3a', fontWeight: 700 }}>
+            {msg}
+          </div>
+        )}
+        {err && (
+          <div style={{ background: '#fff0f0', border: '2px solid #ff6b6b', borderRadius: 12, padding: '10px 18px', color: '#c0392b', fontWeight: 700 }}>
+            ⚠️ 錯誤：{err}
+          </div>
+        )}
+
+        {/* ── 選擇小孩 ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 900, color: '#5c2d91' }}>👦 選擇小孩</h2>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {kids.map((k) => (
-              <option key={k.id} value={k.id}>
+              <button
+                key={k.id}
+                onClick={() => setSelectedKid(k.id)}
+                style={
+                  selectedKid === k.id
+                    ? btn('linear-gradient(135deg, #845ef7, #cc5de8)', '#fff', '0 2px 8px rgba(132,94,247,.45)')
+                    : btn('rgba(0,0,0,.07)', '#444')
+                }
+              >
                 {k.name}
-              </option>
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        </div>
+
+        {/* ── 快速加扣分 ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 900, color: '#e67700' }}>⚡ 快速加扣分</h2>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {[1, 2, 5].map((n) => (
+              <button
+                key={`p${n}`}
+                onClick={() => addPoints(n, 'manual')}
+                style={btn('linear-gradient(135deg, #51cf66, #a9e34b)', '#fff', '0 2px 6px rgba(81,207,102,.4)')}
+              >
+                +{n} ⭐
+              </button>
+            ))}
+            {[1, 2, 5].map((n) => (
+              <button
+                key={`m${n}`}
+                onClick={() => addPoints(-n, 'manual')}
+                style={btn('linear-gradient(135deg, #ff6b6b, #f03e3e)', '#fff', '0 2px 6px rgba(255,107,107,.4)')}
+              >
+                -{n}
+              </button>
+            ))}
+          </div>
+          <p style={{ margin: '10px 0 0', fontSize: 13, color: '#888' }}>扣分會自動扣到 0 為止（不會變負數）。</p>
+        </div>
+
+        {/* ── 每日任務（領點） ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 900, color: '#e67700' }}>✅ 每日任務（孩子領點用）</h2>
+          {tasks.filter((t) => t.active).length === 0 ? (
+            <div style={{ color: '#888' }}>目前沒有啟用中的任務。</div>
+          ) : (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {tasks
+                .filter((t) => t.active)
+                .map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => claimTask(t.id)}
+                    style={btn('linear-gradient(135deg, #ffa94d, #ffd43b)', '#5c4400', '0 2px 6px rgba(255,169,77,.4)')}
+                  >
+                    {t.title} <span style={{ opacity: 0.75 }}>(+{t.points})</span>
+                  </button>
+                ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── 任務管理 ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 14px', fontSize: 20, fontWeight: 900, color: '#5c2d91' }}>📋 任務管理</h2>
+
+          {/* 表單 */}
+          <div style={{ display: 'grid', gap: 10, maxWidth: 520, marginBottom: 18 }}>
+            <label style={labelStyle}>
+              標題
+              <input
+                value={taskDraft.title}
+                onChange={(e) => setTaskDraft((d) => ({ ...d, title: e.target.value }))}
+                style={inputStyle}
+                placeholder="任務名稱…"
+              />
+            </label>
+            <label style={labelStyle}>
+              點數
+              <input
+                type="number"
+                value={taskDraft.points}
+                onChange={(e) => setTaskDraft((d) => ({ ...d, points: Number(e.target.value) }))}
+                style={{ ...inputStyle, width: 120 }}
+              />
+            </label>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 600, fontSize: 14, color: '#495057' }}>
+              <input
+                type="checkbox"
+                checked={taskDraft.is_daily}
+                onChange={(e) => setTaskDraft((d) => ({ ...d, is_daily: e.target.checked }))}
+              />
+              每日任務（同一天只能領一次）
+            </label>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 600, fontSize: 14, color: '#495057' }}>
+              <input
+                type="checkbox"
+                checked={taskDraft.active}
+                onChange={(e) => setTaskDraft((d) => ({ ...d, active: e.target.checked }))}
+              />
+              啟用
+            </label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={saveTask}
+                style={btn('linear-gradient(135deg, #845ef7, #cc5de8)', '#fff', '0 2px 6px rgba(132,94,247,.4)')}
+              >
+                {taskDraft.id ? '💾 更新任務' : '➕ 新增任務'}
+              </button>
+              {taskDraft.id && (
+                <button
+                  onClick={() => setTaskDraft({ title: '', points: 1, is_daily: true, active: true })}
+                  style={btn('rgba(0,0,0,.08)', '#444')}
+                >
+                  取消編輯
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 任務列表 */}
+          <div style={{ display: 'grid', gap: 8 }}>
+            {tasks.map((t, idx) => (
+              <div key={t.id} style={rowCard(t.active)}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#333' }}>
+                  {t.title}
+                  <span style={{ marginLeft: 6, fontWeight: 500, color: '#51cf66' }}>+{t.points}</span>
+                  {t.is_daily && <span style={{ marginLeft: 6, fontSize: 12, color: '#845ef7', background: '#f3f0ff', borderRadius: 6, padding: '2px 7px' }}>每日</span>}
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button onClick={() => moveTask(t.id, -1)} disabled={idx === 0} style={btn('rgba(0,0,0,.07)', '#444')}>↑</button>
+                  <button onClick={() => moveTask(t.id, 1)} disabled={idx === tasks.length - 1} style={btn('rgba(0,0,0,.07)', '#444')}>↓</button>
+                  <button onClick={() => editTask(t)} style={btn('linear-gradient(135deg, #339af0, #74c0fc)', '#fff')}>編輯</button>
+                  <button onClick={() => toggleTaskActive(t.id, !t.active)} style={btn('linear-gradient(135deg, #ffa94d, #ffd43b)', '#5c4400')}>
+                    {t.active ? '停用' : '啟用'}
+                  </button>
+                  <button onClick={() => deleteTask(t.id)} style={btn('linear-gradient(135deg, #ff6b6b, #f03e3e)', '#fff')}>刪除</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 願望兌換 ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 900, color: '#e67700' }}>🎁 願望兌換（孩子兌換用）</h2>
+          {rewards.filter((r) => r.active).length === 0 ? (
+            <div style={{ color: '#888' }}>目前沒有啟用中的願望。</div>
+          ) : (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {rewards
+                .filter((r) => r.active)
+                .map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => redeem(r.id)}
+                    style={btn('linear-gradient(135deg, #cc5de8, #f783ac)', '#fff', '0 2px 6px rgba(204,93,232,.4)')}
+                  >
+                    {r.title} <span style={{ opacity: 0.8 }}>（{r.cost_points} 點）</span>
+                  </button>
+                ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── 願望管理 ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 14px', fontSize: 20, fontWeight: 900, color: '#5c2d91' }}>🌈 願望管理</h2>
+
+          {/* 表單 */}
+          <div style={{ display: 'grid', gap: 10, maxWidth: 520, marginBottom: 18 }}>
+            <label style={labelStyle}>
+              標題
+              <input
+                value={rewardDraft.title}
+                onChange={(e) => setRewardDraft((d) => ({ ...d, title: e.target.value }))}
+                style={inputStyle}
+                placeholder="願望名稱…"
+              />
+            </label>
+            <label style={labelStyle}>
+              需要點數
+              <input
+                type="number"
+                value={rewardDraft.cost_points}
+                onChange={(e) => setRewardDraft((d) => ({ ...d, cost_points: Number(e.target.value) }))}
+                style={{ ...inputStyle, width: 120 }}
+              />
+            </label>
+            <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontWeight: 600, fontSize: 14, color: '#495057' }}>
+              <input
+                type="checkbox"
+                checked={rewardDraft.active}
+                onChange={(e) => setRewardDraft((d) => ({ ...d, active: e.target.checked }))}
+              />
+              啟用
+            </label>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <button
+                onClick={saveReward}
+                style={btn('linear-gradient(135deg, #845ef7, #cc5de8)', '#fff', '0 2px 6px rgba(132,94,247,.4)')}
+              >
+                {rewardDraft.id ? '💾 更新願望' : '➕ 新增願望'}
+              </button>
+              {rewardDraft.id && (
+                <button
+                  onClick={() => setRewardDraft({ title: '', cost_points: 10, active: true })}
+                  style={btn('rgba(0,0,0,.08)', '#444')}
+                >
+                  取消編輯
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 願望列表 */}
+          <div style={{ display: 'grid', gap: 8 }}>
+            {rewards.map((r, idx) => (
+              <div key={r.id} style={rowCard(r.active)}>
+                <div style={{ fontWeight: 700, fontSize: 15, color: '#333' }}>
+                  {r.title}
+                  <span style={{ marginLeft: 6, fontWeight: 500, color: '#cc5de8' }}>{r.cost_points} 點</span>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <button onClick={() => moveReward(r.id, -1)} disabled={idx === 0} style={btn('rgba(0,0,0,.07)', '#444')}>↑</button>
+                  <button onClick={() => moveReward(r.id, 1)} disabled={idx === rewards.length - 1} style={btn('rgba(0,0,0,.07)', '#444')}>↓</button>
+                  <button onClick={() => editReward(r)} style={btn('linear-gradient(135deg, #339af0, #74c0fc)', '#fff')}>編輯</button>
+                  <button onClick={() => toggleRewardActive(r.id, !r.active)} style={btn('linear-gradient(135deg, #ffa94d, #ffd43b)', '#5c4400')}>
+                    {r.active ? '停用' : '啟用'}
+                  </button>
+                  <button onClick={() => deleteReward(r.id)} style={btn('linear-gradient(135deg, #ff6b6b, #f03e3e)', '#fff')}>刪除</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 待執行願望 ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 14px', fontSize: 20, fontWeight: 900, color: '#e67700' }}>🌟 待執行願望 → 完成</h2>
+          {pending.length === 0 ? (
+            <div style={{ color: '#888', fontSize: 16 }}>🎉 目前沒有待執行的兌換！</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {pending.map((p) => (
+                <div
+                  key={p.id}
+                  style={{
+                    background: 'linear-gradient(90deg, #fff9db, #fff3bf)',
+                    border: '2px solid #ffd43b',
+                    borderRadius: 14,
+                    padding: '10px 16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontWeight: 600, color: '#5c4400' }}>
+                    <span style={{ background: '#ffd43b', borderRadius: 999, padding: '2px 12px', fontWeight: 800 }}>
+                      {p.kids?.[0]?.name ?? p.kid_id}
+                    </span>
+                    <span>🎁 {p.rewards?.[0]?.title ?? '（未知願望）'}</span>
+                    {p.rewards?.[0] && <span style={{ opacity: 0.7, fontSize: 14 }}>（{p.rewards[0].cost_points} 點）</span>}
+                  </div>
+                  <button
+                    onClick={() => markDone(p.id)}
+                    style={btn('linear-gradient(135deg, #51cf66, #a9e34b)', '#fff', '0 2px 6px rgba(81,207,102,.4)')}
+                  >
+                    ✅ 標記完成
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
-
-      <section style={{ marginTop: 16 }}>
-        <h2>快速加扣分</h2>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {[1, 2, 5].map((n) => (
-            <button key={`p${n}`} onClick={() => addPoints(n, 'manual')}>
-              +{n}
-            </button>
-          ))}
-          {[1, 2, 5].map((n) => (
-            <button key={`m${n}`} onClick={() => addPoints(-n, 'manual')}>
-              -{n}
-            </button>
-          ))}
-        </div>
-        <p style={{ opacity: 0.7, marginTop: 6 }}>扣分會自動扣到 0 為止（不會變負數）。</p>
-      </section>
-
-      <section style={{ marginTop: 18 }}>
-        <h2>每日任務（孩子領點用）</h2>
-        {tasks.filter((t) => t.active).length === 0 ? (
-          <div style={{ opacity: 0.7 }}>目前沒有啟用中的任務。</div>
-        ) : (
-          <div style={{ display: 'grid', gap: 8 }}>
-            {tasks
-              .filter((t) => t.active)
-              .map((t) => (
-                <button key={t.id} onClick={() => claimTask(t.id)}>
-                  {t.title} (+{t.points})
-                </button>
-              ))}
-          </div>
-        )}
-      </section>
-
-      <section style={{ marginTop: 18, paddingTop: 12, borderTop: '1px solid rgba(127,127,127,.2)' }}>
-        <h2>任務管理（新增 / 編輯 / 排序 / 刪除）</h2>
-
-        <div style={{ display: 'grid', gap: 8, maxWidth: 560 }}>
-          <label>
-            標題
-            <input
-              value={taskDraft.title}
-              onChange={(e) => setTaskDraft((d) => ({ ...d, title: e.target.value }))}
-              style={{ width: '100%' }}
-            />
-          </label>
-          <label>
-            點數
-            <input
-              type="number"
-              value={taskDraft.points}
-              onChange={(e) => setTaskDraft((d) => ({ ...d, points: Number(e.target.value) }))}
-              style={{ width: '100%' }}
-            />
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={taskDraft.is_daily}
-              onChange={(e) => setTaskDraft((d) => ({ ...d, is_daily: e.target.checked }))}
-            />{' '}
-            每日任務（同一天只能領一次）
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={taskDraft.active}
-              onChange={(e) => setTaskDraft((d) => ({ ...d, active: e.target.checked }))}
-            />{' '}
-            啟用
-          </label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button onClick={saveTask}>{taskDraft.id ? '更新任務' : '新增任務'}</button>
-            {taskDraft.id ? (
-              <button onClick={() => setTaskDraft({ title: '', points: 1, is_daily: true, active: true })}>取消編輯</button>
-            ) : null}
-          </div>
-        </div>
-
-        <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-          {tasks.map((t, idx) => (
-            <div
-              key={t.id}
-              style={{
-                border: '1px solid rgba(127,127,127,.25)',
-                borderRadius: 12,
-                padding: 10,
-                opacity: t.active ? 1 : 0.6,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div>
-                  <b>{t.title}</b> <span style={{ opacity: 0.7 }}>(+{t.points})</span> {t.is_daily ? <span style={{ opacity: 0.7 }}>[每日]</span> : null}
-                </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <button onClick={() => moveTask(t.id, -1)} disabled={idx === 0}>
-                    ↑
-                  </button>
-                  <button onClick={() => moveTask(t.id, 1)} disabled={idx === tasks.length - 1}>
-                    ↓
-                  </button>
-                  <button onClick={() => editTask(t)}>編輯</button>
-                  <button onClick={() => toggleTaskActive(t.id, !t.active)}>{t.active ? '停用' : '啟用'}</button>
-                  <button onClick={() => deleteTask(t.id)} style={{ color: 'crimson' }}>
-                    刪除
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section style={{ marginTop: 18 }}>
-        <h2>願望兌換（孩子兌換用）</h2>
-        {rewards.filter((r) => r.active).length === 0 ? (
-          <div style={{ opacity: 0.7 }}>目前沒有啟用中的願望。</div>
-        ) : (
-          <div style={{ display: 'grid', gap: 8 }}>
-            {rewards
-              .filter((r) => r.active)
-              .map((r) => (
-                <button key={r.id} onClick={() => redeem(r.id)}>
-                  {r.title}（{r.cost_points} 點）
-                </button>
-              ))}
-          </div>
-        )}
-      </section>
-
-      <section style={{ marginTop: 18, paddingTop: 12, borderTop: '1px solid rgba(127,127,127,.2)' }}>
-        <h2>願望管理（新增 / 編輯 / 排序 / 刪除）</h2>
-
-        <div style={{ display: 'grid', gap: 8, maxWidth: 560 }}>
-          <label>
-            標題
-            <input
-              value={rewardDraft.title}
-              onChange={(e) => setRewardDraft((d) => ({ ...d, title: e.target.value }))}
-              style={{ width: '100%' }}
-            />
-          </label>
-          <label>
-            需要點數
-            <input
-              type="number"
-              value={rewardDraft.cost_points}
-              onChange={(e) => setRewardDraft((d) => ({ ...d, cost_points: Number(e.target.value) }))}
-              style={{ width: '100%' }}
-            />
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={rewardDraft.active}
-              onChange={(e) => setRewardDraft((d) => ({ ...d, active: e.target.checked }))}
-            />{' '}
-            啟用
-          </label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <button onClick={saveReward}>{rewardDraft.id ? '更新願望' : '新增願望'}</button>
-            {rewardDraft.id ? (
-              <button onClick={() => setRewardDraft({ title: '', cost_points: 10, active: true })}>取消編輯</button>
-            ) : null}
-          </div>
-        </div>
-
-        <div style={{ marginTop: 12, display: 'grid', gap: 8 }}>
-          {rewards.map((r, idx) => (
-            <div
-              key={r.id}
-              style={{ border: '1px solid rgba(127,127,127,.25)', borderRadius: 12, padding: 10, opacity: r.active ? 1 : 0.6 }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <div>
-                  <b>{r.title}</b> <span style={{ opacity: 0.7 }}>（{r.cost_points} 點）</span>
-                </div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <button onClick={() => moveReward(r.id, -1)} disabled={idx === 0}>
-                    ↑
-                  </button>
-                  <button onClick={() => moveReward(r.id, 1)} disabled={idx === rewards.length - 1}>
-                    ↓
-                  </button>
-                  <button onClick={() => editReward(r)}>編輯</button>
-                  <button onClick={() => toggleRewardActive(r.id, !r.active)}>{r.active ? '停用' : '啟用'}</button>
-                  <button onClick={() => deleteReward(r.id)} style={{ color: 'crimson' }}>
-                    刪除
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section style={{ marginTop: 18 }}>
-        <h2>待執行 → 完成</h2>
-        {pending.length === 0 ? (
-          <div style={{ opacity: 0.7 }}>目前沒有待執行的兌換。</div>
-        ) : (
-          <ul style={{ paddingLeft: 18 }}>
-            {pending.map((p) => (
-              <li key={p.id} style={{ marginBottom: 10 }}>
-                <div>
-                  <b>{p.kids?.[0]?.name ?? p.kid_id}</b>：{p.rewards?.[0]?.title ?? '（未知願望）'}
-                  {p.rewards?.[0] ? `（${p.rewards[0].cost_points} 點）` : ''}
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                  <button onClick={() => markDone(p.id)}>標記完成</button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {msg ? <div style={{ color: 'green', marginTop: 12 }}>{msg}</div> : null}
-      {err ? <div style={{ color: 'crimson', marginTop: 12 }}>錯誤：{err}</div> : null}
     </main>
   )
 }
