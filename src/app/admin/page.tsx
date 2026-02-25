@@ -53,7 +53,16 @@ function Admin() {
   const [boardPin, setBoardPin] = useState('')
   const [pinMsg, setPinMsg] = useState<string | null>(null)
   useEffect(() => {
-    setBoardPin(localStorage.getItem('kidboard_pin') ?? '')
+    async function loadPin() {
+      const supabase = getSupabase()
+      const { data } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'board_pin')
+        .maybeSingle()
+      setBoardPin(data?.value ?? '')
+    }
+    loadPin()
   }, [])
 
   // Task editor state
@@ -119,20 +128,28 @@ function Admin() {
 
   const selectedKidName = useMemo(() => kids.find((k) => k.id === selectedKid)?.name ?? '', [kids, selectedKid])
 
-  function saveBoardPin() {
+  async function saveBoardPin() {
     const trimmed = boardPin.trim()
     if (trimmed && !/^\d+$/.test(trimmed)) {
       setPinMsg('請輸入純數字密碼')
       return
     }
+    const supabase = getSupabase()
     if (trimmed) {
-      localStorage.setItem('kidboard_pin', trimmed)
+      const { error } = await supabase
+        .from('settings')
+        .upsert({ key: 'board_pin', value: trimmed })
+      if (error) { setPinMsg(`儲存失敗：${error.message}`); return }
       setPinMsg(`密碼已設定為 ${trimmed} ✅`)
     } else {
-      localStorage.removeItem('kidboard_pin')
-      setPinMsg('已清除密碼，計分看板將直接開放✅')
+      const { error } = await supabase
+        .from('settings')
+        .delete()
+        .eq('key', 'board_pin')
+      if (error) { setPinMsg(`清除失敗：${error.message}`); return }
+      setPinMsg('已清除密碼，計分看板將直接開放 ✅')
     }
-    // 清除所有裝置的 session
+    // 清除本機 session
     sessionStorage.removeItem('kidboard_unlocked')
     setTimeout(() => setPinMsg(null), 3000)
   }
@@ -854,9 +871,10 @@ function Admin() {
             </button>
             {boardPin && (
               <button
-                onClick={() => {
+                onClick={async () => {
+                  const supabase = getSupabase()
+                  await supabase.from('settings').delete().eq('key', 'board_pin')
                   setBoardPin('')
-                  localStorage.removeItem('kidboard_pin')
                   sessionStorage.removeItem('kidboard_unlocked')
                   setPinMsg('已清除密碼，計分看板將直接開放 ✅')
                   setTimeout(() => setPinMsg(null), 3000)

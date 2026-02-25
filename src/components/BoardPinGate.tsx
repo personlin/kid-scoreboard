@@ -1,24 +1,37 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { getSupabase } from '@/lib/supabaseClient'
 
-const STORAGE_KEY = 'kidboard_pin'        // localStorage：管理員設定的密碼
 const SESSION_KEY = 'kidboard_unlocked'   // sessionStorage：本次已解鎖
 
 export default function BoardPinGate({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<'loading' | 'locked' | 'unlocked'>('loading')
   const [input, setInput] = useState('')
   const [shake, setShake] = useState(false)
+  const pinRef = useRef<string>('')  // 從 Supabase 讀取的 PIN
 
   useEffect(() => {
-    const pin = localStorage.getItem(STORAGE_KEY)
-    // 若未設定密碼，直接開放
-    if (!pin) {
-      setStatus('unlocked')
-      return
+    async function fetchPin() {
+      const supabase = getSupabase()
+      const { data } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'board_pin')
+        .maybeSingle()
+
+      const pin = data?.value ?? ''
+      pinRef.current = pin
+
+      // 若未設定密碼，直接開放
+      if (!pin) {
+        setStatus('unlocked')
+        return
+      }
+      const unlocked = sessionStorage.getItem(SESSION_KEY)
+      setStatus(unlocked === '1' ? 'unlocked' : 'locked')
     }
-    const unlocked = sessionStorage.getItem(SESSION_KEY)
-    setStatus(unlocked === '1' ? 'unlocked' : 'locked')
+    fetchPin()
   }, [])
 
   function handlePress(digit: string) {
@@ -26,7 +39,7 @@ export default function BoardPinGate({ children }: { children: React.ReactNode }
     const next = input + digit
     setInput(next)
 
-    const pin = localStorage.getItem(STORAGE_KEY) ?? ''
+    const pin = pinRef.current
     if (next.length >= pin.length) {
       if (next === pin) {
         sessionStorage.setItem(SESSION_KEY, '1')
@@ -58,7 +71,7 @@ export default function BoardPinGate({ children }: { children: React.ReactNode }
 
   if (status === 'unlocked') return <>{children}</>
 
-  const dots = Array.from({ length: Math.max(4, (localStorage.getItem(STORAGE_KEY) ?? '').length) })
+  const dots = Array.from({ length: Math.max(4, pinRef.current.length) })
 
   return (
     <main style={pageStyle}>
