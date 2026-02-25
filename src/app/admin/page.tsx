@@ -49,6 +49,13 @@ function Admin() {
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Board PIN
+  const [boardPin, setBoardPin] = useState('')
+  const [pinMsg, setPinMsg] = useState<string | null>(null)
+  useEffect(() => {
+    setBoardPin(localStorage.getItem('kidboard_pin') ?? '')
+  }, [])
+
   // Task editor state
   const [taskDraft, setTaskDraft] = useState<{ id?: string; title: string; points: number; is_daily: boolean; active: boolean }>({
     title: '',
@@ -97,7 +104,7 @@ function Admin() {
         .order('redeemed_at', { ascending: false })
         .limit(50)
       if (p.error) throw p.error
-      setPending((p.data ?? []) as PendingRedemption[])
+      setPending((p.data ?? []) as unknown as PendingRedemption[])
     } catch (e: unknown) {
       setErr(errMsg(e))
     } finally {
@@ -111,6 +118,24 @@ function Admin() {
   }, [])
 
   const selectedKidName = useMemo(() => kids.find((k) => k.id === selectedKid)?.name ?? '', [kids, selectedKid])
+
+  function saveBoardPin() {
+    const trimmed = boardPin.trim()
+    if (trimmed && !/^\d+$/.test(trimmed)) {
+      setPinMsg('請輸入純數字密碼')
+      return
+    }
+    if (trimmed) {
+      localStorage.setItem('kidboard_pin', trimmed)
+      setPinMsg(`密碼已設定為 ${trimmed} ✅`)
+    } else {
+      localStorage.removeItem('kidboard_pin')
+      setPinMsg('已清除密碼，計分看板將直接開放✅')
+    }
+    // 清除所有裝置的 session
+    sessionStorage.removeItem('kidboard_unlocked')
+    setTimeout(() => setPinMsg(null), 3000)
+  }
 
   async function signOut() {
     setMsg(null)
@@ -790,6 +815,61 @@ function Admin() {
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── 計分看板密碼設定 ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 900, color: '#5c2d91' }}>🔒 計分看板密碼</h2>
+          <p style={{ margin: '0 0 14px', fontSize: 13, color: '#888', lineHeight: 1.6 }}>
+            小孩瀏覽 /board 時需輸入此數字密碼。<br />
+            留空則不需密碼，任何人就能直接查看。
+          </p>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={boardPin}
+              onChange={(e) => setBoardPin(e.target.value.replace(/\D/g, '').slice(0, 8))}
+              placeholder="例：1234"
+              style={{
+                border: '2px solid #dee2e6',
+                borderRadius: 12,
+                padding: '10px 14px',
+                fontSize: 22,
+                fontWeight: 800,
+                letterSpacing: 6,
+                width: 160,
+                fontFamily: 'monospace',
+                outline: 'none',
+              }}
+            />
+            <button
+              onClick={saveBoardPin}
+              style={btn('linear-gradient(135deg, #845ef7, #cc5de8)', '#fff', '0 2px 6px rgba(132,94,247,.4)')}
+            >
+              💾 儲存密碼
+            </button>
+            {boardPin && (
+              <button
+                onClick={() => {
+                  setBoardPin('')
+                  localStorage.removeItem('kidboard_pin')
+                  sessionStorage.removeItem('kidboard_unlocked')
+                  setPinMsg('已清除密碼，計分看板將直接開放 ✅')
+                  setTimeout(() => setPinMsg(null), 3000)
+                }}
+                style={btn('rgba(0,0,0,.08)', '#444')}
+              >
+                清除密碼
+              </button>
+            )}
+          </div>
+          {pinMsg && (
+            <div style={{ marginTop: 10, background: '#d3f9d8', border: '2px solid #51cf66', borderRadius: 10, padding: '8px 14px', color: '#1c7c3a', fontWeight: 700, fontSize: 13 }}>
+              {pinMsg}
             </div>
           )}
         </div>

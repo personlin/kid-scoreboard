@@ -1,6 +1,6 @@
 'use client'
 
-import AuthGate from '@/components/AuthGate'
+import BoardPinGate from '@/components/BoardPinGate'
 import { errMsg, getSupabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
@@ -31,9 +31,9 @@ const CARD_GRADIENTS = [
 
 export default function BoardPage() {
   return (
-    <AuthGate>
+    <BoardPinGate>
       <Board />
-    </AuthGate>
+    </BoardPinGate>
   )
 }
 
@@ -74,7 +74,7 @@ function Board() {
         .limit(20)
 
       if (r.error) throw r.error
-      setPending((r.data ?? []) as PendingRedemption[])
+      setPending((r.data ?? []) as unknown as PendingRedemption[])
     } catch (e: unknown) {
       setErr(errMsg(e))
     } finally {
