@@ -53,6 +53,7 @@ function History() {
       if (!selectedKid && kk[0]?.id) setSelectedKid(kk[0].id)
     } catch (e: unknown) {
       setErr((e instanceof Error ? e.message : String(e)) ?? 'Unknown error')
+      setLoading(false)
     }
   }
 
@@ -112,6 +113,7 @@ function History() {
   function reasonLabel(log: PointLog) {
     if (log.tasks?.[0]?.title) return `任務：${log.tasks[0].title}`
     if (log.reason === 'manual') return '手動加扣分'
+    if (log.reason === 'task') return '任務（已刪除）'
     return log.reason
   }
 
