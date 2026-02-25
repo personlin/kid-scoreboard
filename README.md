@@ -9,6 +9,7 @@
 - 🌈 彩色漸層卡片設計，視覺吸引力強
 - 🔄 自動每 10 秒刷新（適合展示在家中螢幕上）
 - 📋 待執行願望清單
+- 🔢 **數字 PIN 門禁**：進入前須輸入數字密碼（由家長在管理區設定）；未設定則直接開放
 
 ### 👨‍💼 家長管理區 (`/admin`)
 - ⭐ **快速加扣分**：一鍵加減 1/2/5 分
@@ -26,6 +27,11 @@
   - 檢視所有待完成的兌換
   - 標記願望已完成
 
+- 🔒 **計分看板密碼設定**：
+  - 設定 1–8 位數字 PIN，儲存於 Supabase `settings` 資料表
+  - 所有裝置即時同步，無跨瀏覽器問題
+  - 留空則撤除密碼保護
+
 ### � 歷史紀錄 (`/history`)
 - 🔍 依孩子查詢加扣分紀錄（最近 100 筆）
   - 顯示時間、點數變化（色碼 ±）、原因（任務名稱 或 手動加扣分）、備註
@@ -34,8 +40,12 @@
 - 所有時間戳以 `Asia/Taipei` 時區顯示
 
 ### 🔐 安全性
-- Supabase 認證門禁（AuthGate）
-- 所有頁面（board / admin / history）均需認證登入
+
+| 頁面 | 認證方式 |
+|------|----------|
+| `/admin` | Supabase Email / Password 登入（AuthGate）|
+| `/history` | Supabase Email / Password 登入（AuthGate）|
+| `/board` | 數字 PIN 門禁（BoardPinGate），PIN 儲存於 Supabase `settings`；未設定則直接開放 |
 
 ## 🚀 快速開始
 
@@ -81,9 +91,10 @@ src/
 │   ├── layout.tsx        # 通用佈局
 │   └── globals.css       # 全域樣式
 ├── components/
-│   └── AuthGate.tsx      # 認證守衛
+│   ├── AuthGate.tsx      # Email/Password 認證守衛（admin / history）
+│   └── BoardPinGate.tsx  # 數字 PIN 門禁（board）
 └── lib/
-    └── supabaseClient.ts # Supabase 客戶端配置
+    └── supabaseClient.ts # Supabase 客戶端配置 + errMsg() 工具函式
 ```
 
 ## 🛠️ 開發工具
@@ -128,13 +139,20 @@ npm run build
 - `active`: 是否啟用
 - `sort_order`: 顯示順序
 
-### Point Logs（加扣分紀錄）
+### Point Events（加扣分紀錄，資料表名 `point_events`）
 - `kid_id`: 孩子 ID
 - `delta`: 點數變化（正為加分、負為扣分）
-- `reason`: 原因（`'manual'` 表示手動加扣分、`'task'` 表示任務）
-- `task_id`: 關聯的任務 ID（手動加扣分時為 null；任務刪除後變 null）
-- `note`: 備註
+- `kind`: 事件類型（`'task'` 任務 / `'manual'` 手動 / `'redeem'` 兌換扣分）
+- `reason`: 說明文字（任務名稱、手動備註等）
+- `task_id`: 關聯的任務 ID（非任務時為 null）
+- `redemption_id`: 關聯的兌換 ID（非兌換時為 null）
+- `event_date`: 事件日期（用於每日任務去重）
 - `created_at`: 紀錄時間
+
+### Settings（系統設定，資料表名 `settings`）
+- `key`: 設定鍵值（目前使用 `board_pin`）
+- `value`: 設定值（文字）
+- RLS：匿名可讀（供 BoardPinGate 驗證）、已登入者可寫（供管理員修改）
 
 ### Redemptions（兌換紀錄）
 - `kid_id`: 孩子 ID
@@ -147,20 +165,22 @@ npm run build
 ## 🎯 使用流程
 
 ### 孩子視角
-1. 打開 [/board](http://localhost:3000/board) 查看計分板
-2. 完成家長指定的任務時，點擊「每日任務」領取點數
-3. 累積足夠點數後，點擊「願望兌換」選擇想要的獎勵
+1. 打開 [/board](http://localhost:3000/board)，輸入家長設定的數字 PIN
+2. 查看自己的積分與待執行願望
+3. 完成任務後點擊「每日任務」領取點數（每日任務當天只能領一次）
+4. 累積足夠點數後點擊「願望兌換」選擇想要的獎勵
 
-### 家長視角
-1. 打開 [/admin](http://localhost:3000/admin) 進入管理區
-2. **設定任務和願望**：
-   - 在「任務管理」區新增每日任務
-   - 在「願望管理」區新增可兌換的獎勵
-3. **管理積分**：
-   - 使用「快速加扣分」按鈕獎勵或懲罰
-   - 查看「待執行願望」了解進度
-4. **追蹤進度**：標記完成的願望
-5. **查閱歷史**：點擊「📋 紀錄」前往 [/history](http://localhost:3000/history)，依孩子查看加扣分與兌換紀錄
+### 家長視角（初次設定）
+1. 打開 [/admin](http://localhost:3000/admin)，以 Supabase 帳號登入
+2. **新增孩子**：在孩子管理區建立孩子資料
+3. **設定任務**：在「任務管理」區新增每日任務與點數
+4. **設定願望**：在「願望管理」區新增可兌換的獎勵
+5. **設定 PIN**：在「計分看板密碼」區設定數字 PIN，儲存後跨裝置同步
+
+### 家長視角（日常使用）
+1. 使用「快速加扣分」按鈕即時獎勵或扣分
+2. 查看「待執行願望」，為孩子兌現承諾後標記完成
+3. 點擊「📋 紀錄」前往 [/history](http://localhost:3000/history)，依孩子查看加扣分與兌換紀錄
 
 ## 📦 技術棧
 
