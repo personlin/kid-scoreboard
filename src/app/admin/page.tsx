@@ -457,6 +457,17 @@ function Admin() {
               🔄 重新整理
             </button>
             <Link
+              href="/history"
+              style={{
+                ...btn('linear-gradient(135deg, #ffa94d, #ffd43b)', '#5c4400', '0 2px 6px rgba(255,169,77,.4)'),
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              📋 紀錄
+            </Link>
+            <Link
               href="/board"
               style={{
                 ...btn('linear-gradient(135deg, #339af0, #74c0fc)', '#fff', '0 2px 6px rgba(51,154,240,.4)'),
