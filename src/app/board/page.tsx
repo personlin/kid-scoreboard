@@ -156,6 +156,21 @@ function Board() {
               🔄 重新整理
             </button>
             <Link
+              href="/history"
+              style={{
+                background: 'linear-gradient(135deg, #ffa94d, #ffd43b)',
+                color: '#5c4400',
+                borderRadius: 999,
+                padding: '5px 14px',
+                fontWeight: 700,
+                fontSize: 14,
+                textDecoration: 'none',
+                boxShadow: '0 2px 6px rgba(255,169,77,.4)',
+              }}
+            >
+              📋 紀錄
+            </Link>
+            <Link
               href="/admin"
               style={{
                 background: 'linear-gradient(135deg, #20c997, #3bc9db)',
