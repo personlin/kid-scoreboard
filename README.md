@@ -26,9 +26,16 @@
   - 檢視所有待完成的兌換
   - 標記願望已完成
 
+### � 歷史紀錄 (`/history`)
+- 🔍 依孩子查詢加扣分紀錄（最近 100 筆）
+  - 顯示時間、點數變化（色碼 ±）、原因（任務名稱 或 手動加扣分）、備註
+- 🎁 依孩子查詢願望兌換紀錄（最近 100 筆）
+  - 顯示兌換時間、願望名稱、點數、狀態（⏳ 待執行 / ✅ 已完成）、完成時間
+- 所有時間戳以 `Asia/Taipei` 時區顯示
+
 ### 🔐 安全性
 - Supabase 認證門禁（AuthGate）
-- 家長管理區需認證登入
+- 所有頁面（board / admin / history）均需認證登入
 
 ## 🚀 快速開始
 
@@ -67,9 +74,10 @@ npm start
 ```
 src/
 ├── app/
-│   ├── page.tsx          # 首頁
+│   ├── page.tsx          # 首頁（快速入口）
 │   ├── admin/page.tsx    # 家長管理頁面
 │   ├── board/page.tsx    # 孩子計分板
+│   ├── history/page.tsx  # 加扣分與兌換歷史紀錄
 │   ├── layout.tsx        # 通用佈局
 │   └── globals.css       # 全域樣式
 ├── components/
@@ -120,12 +128,21 @@ npm run build
 - `active`: 是否啟用
 - `sort_order`: 顯示順序
 
+### Point Logs（加扣分紀錄）
+- `kid_id`: 孩子 ID
+- `delta`: 點數變化（正為加分、負為扣分）
+- `reason`: 原因（`'manual'` 表示手動加扣分、`'task'` 表示任務）
+- `task_id`: 關聯的任務 ID（手動加扣分時為 null；任務刪除後變 null）
+- `note`: 備註
+- `created_at`: 紀錄時間
+
 ### Redemptions（兌換紀錄）
 - `kid_id`: 孩子 ID
 - `reward_id`: 願望 ID
-- `status`: 'pending' 或 'done'
+- `status`: `'pending'` 或 `'done'`
 - `redeemed_at`: 兌換時間
 - `done_at`: 完成時間
+- `note`: 備註
 
 ## 🎯 使用流程
 
@@ -143,6 +160,7 @@ npm run build
    - 使用「快速加扣分」按鈕獎勵或懲罰
    - 查看「待執行願望」了解進度
 4. **追蹤進度**：標記完成的願望
+5. **查閱歷史**：點擊「📋 紀錄」前往 [/history](http://localhost:3000/history)，依孩子查看加扣分與兌換紀錄
 
 ## 📦 技術棧
 
