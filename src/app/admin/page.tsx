@@ -73,6 +73,10 @@ function Admin() {
     active: true,
   })
 
+  // General manual scoring state
+  const [manualDelta, setManualDelta] = useState<number>(1)
+  const [manualReason, setManualReason] = useState<string>('')
+
   // Reward editor state
   const [rewardDraft, setRewardDraft] = useState<{ id?: string; title: string; cost_points: number; active: boolean }>({
     title: '',
@@ -594,6 +598,52 @@ function Admin() {
                 -{n}
               </button>
             ))}
+          </div>
+          <p style={{ margin: '10px 0 0', fontSize: 13, color: '#888' }}>扣分會自動扣到 0 為止（不會變負數）。</p>
+        </div>
+
+        {/* ── 一般加扣分 ── */}
+        <div style={card}>
+          <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 900, color: '#0ca678' }}>📝 一般加扣分</h2>
+          <div style={{ display: 'grid', gap: 10, maxWidth: 520 }}>
+            <label style={labelStyle}>
+              分數（正數為加分，負數為扣分）
+              <input
+                type="number"
+                value={manualDelta}
+                onChange={(e) => setManualDelta(Number(e.target.value))}
+                style={{ ...inputStyle, width: 140 }}
+              />
+            </label>
+            <label style={labelStyle}>
+              理由
+              <input
+                value={manualReason}
+                onChange={(e) => setManualReason(e.target.value)}
+                style={inputStyle}
+                placeholder="請輸入理由…"
+              />
+            </label>
+            <div>
+              <button
+                onClick={async () => {
+                  if (!manualReason.trim()) { setErr('請輸入理由'); return }
+                  if (!manualDelta || isNaN(manualDelta)) { setErr('分數不能為 0'); return }
+                  await addPoints(manualDelta, manualReason.trim())
+                  setManualReason('')
+                  setManualDelta(1)
+                }}
+                style={btn(
+                  manualDelta >= 0
+                    ? 'linear-gradient(135deg, #51cf66, #a9e34b)'
+                    : 'linear-gradient(135deg, #ff6b6b, #f03e3e)',
+                  '#fff',
+                  manualDelta >= 0 ? '0 2px 6px rgba(81,207,102,.4)' : '0 2px 6px rgba(255,107,107,.4)',
+                )}
+              >
+                {manualDelta >= 0 ? `+${manualDelta} 加分` : `${manualDelta} 扣分`}
+              </button>
+            </div>
           </div>
           <p style={{ margin: '10px 0 0', fontSize: 13, color: '#888' }}>扣分會自動扣到 0 為止（不會變負數）。</p>
         </div>
