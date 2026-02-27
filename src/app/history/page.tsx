@@ -112,7 +112,10 @@ function History() {
 
   function reasonLabel(log: PointLog) {
     if (log.kind === 'task') return `任務${log.reason ? `：${log.reason}` : ''}`
-    if (log.kind === 'manual') return `手動加扣分${log.reason ? `（${log.reason}）` : ''}`
+    if (log.kind === 'manual') {
+      if (log.reason === 'manual') return '快速加扣分'
+      return `一般加扣分${log.reason ? `：${log.reason}` : ''}`
+    }
     return log.kind
   }
 
