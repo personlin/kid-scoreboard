@@ -12,8 +12,16 @@ export default function BoardPinGate({ children }: { children: React.ReactNode }
   const pinRef = useRef<string>('')  // 從 Supabase 讀取的 PIN
 
   useEffect(() => {
-    async function fetchPin() {
+    async function init() {
       const supabase = getSupabase()
+
+      // 若已有 Supabase 登入 session（管理員），直接解鎖，不需要輸入 PIN
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        setStatus('unlocked')
+        return
+      }
+
       const { data } = await supabase
         .from('settings')
         .select('value')
@@ -31,7 +39,7 @@ export default function BoardPinGate({ children }: { children: React.ReactNode }
       const unlocked = sessionStorage.getItem(SESSION_KEY)
       setStatus(unlocked === '1' ? 'unlocked' : 'locked')
     }
-    fetchPin()
+    init()
   }, [])
 
   function handlePress(digit: string) {
